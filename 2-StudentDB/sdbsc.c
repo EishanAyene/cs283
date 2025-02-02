@@ -63,8 +63,27 @@ int open_db(char *dbFile, bool should_truncate)
 int get_student(int fd, int id, student_t *s)
 {
     // TODO
-    return NOT_IMPLEMENTED_YET;
+    off_t offset = id * STUDENT_RECORD_SIZE;
+
+    if (lseek(fd, offset, SEEK_SET) == -1) {
+        return ERR_DB_FILE;
+    }
+
+    ssize_t bytes_read = read(fd, s, STUDENT_RECORD_SIZE);
+    if (bytes_read == 0) {
+        return SRCH_NOT_FOUND;
+    }
+    if (bytes_read != STUDENT_RECORD_SIZE) {
+        return ERR_DB_FILE;
+    }
+
+    if (s->id == 0) {
+        return SRCH_NOT_FOUND;
+    }
+
+    return NO_ERROR;
 }
+
 
 /*
  *  add_student
@@ -94,8 +113,26 @@ int get_student(int fd, int id, student_t *s)
 int add_student(int fd, int id, char *fname, char *lname, int gpa)
 {
     // TODO
-    printf(M_NOT_IMPL);
-    return NOT_IMPLEMENTED_YET;
+    student_t student = {0};
+    if (get_student(fd, id, &student) == NO_ERROR) {
+        printf(M_ERR_DB_ADD_DUP, id);
+        return ERR_DB_OP;
+    }
+    student.id = id;
+    strncpy(student.fname, fname, sizeof(student.fname));
+    strncpy(student.lname, lname, sizeof(student.lname));
+    student.gpa = gpa;
+    off_t offset = id * STUDENT_RECORD_SIZE;
+    if (lseek(fd, offset, SEEK_SET) < 0) {
+        printf(M_ERR_DB_WRITE);
+        return ERR_DB_FILE;
+    }
+    if (write(fd, &student, STUDENT_RECORD_SIZE) != STUDENT_RECORD_SIZE) {
+        printf(M_ERR_DB_WRITE);
+        return ERR_DB_FILE;
+    }
+    printf(M_STD_ADDED, id);
+    return NO_ERROR;
 }
 
 /*
@@ -123,8 +160,22 @@ int add_student(int fd, int id, char *fname, char *lname, int gpa)
 int del_student(int fd, int id)
 {
     // TODO
-    printf(M_NOT_IMPL);
-    return NOT_IMPLEMENTED_YET;
+    student_t student = {0};
+    if (get_student(fd, id, &student) != NO_ERROR) {
+        printf(M_STD_NOT_FND_MSG, id);
+        return ERR_DB_OP;
+    }
+    off_t offset = id * STUDENT_RECORD_SIZE;
+    if (lseek(fd, offset, SEEK_SET) < 0) {
+        printf(M_ERR_DB_READ);
+        return ERR_DB_FILE;
+    }
+    if (write(fd, &EMPTY_STUDENT_RECORD, STUDENT_RECORD_SIZE) != STUDENT_RECORD_SIZE) {
+        printf(M_ERR_DB_WRITE);
+        return ERR_DB_FILE;
+    }
+    printf(M_STD_DEL_MSG, id);
+    return NO_ERROR;
 }
 
 /*
@@ -151,12 +202,26 @@ int del_student(int fd, int id)
  *            M_ERR_DB_WRITE   error writing to db file (adding student)
  *
  */
+
 int count_db_records(int fd)
 {
     // TODO
-    printf(M_NOT_IMPL);
-    return NOT_IMPLEMENTED_YET;
+    int count = 0;
+    student_t student = {0};
+    lseek(fd, 0, SEEK_SET);
+    while (read(fd, &student, STUDENT_RECORD_SIZE) == STUDENT_RECORD_SIZE) {        
+      if (student.id != 0) {
+            count++;
+        }
+    }
+    if (count == 0) {
+        printf(M_DB_EMPTY);
+    } else {
+        printf(M_DB_RECORD_CNT, count);
+    }
+    return count;
 }
+
 
 /*
  *  print_db
@@ -193,10 +258,34 @@ int count_db_records(int fd)
  */
 int print_db(int fd)
 {
-    // TODO
-    printf(M_NOT_IMPL);
-    return NOT_IMPLEMENTED_YET;
+    student_t student = {0};
+    bool header_printed = false;
+
+
+    lseek(fd, 0, SEEK_SET);
+
+    while (read(fd, &student, STUDENT_RECORD_SIZE) == STUDENT_RECORD_SIZE) {
+
+        if (memcmp(&student, &EMPTY_STUDENT_RECORD, STUDENT_RECORD_SIZE) == 0) {
+            continue;
+        }
+
+        if (!header_printed) {
+            printf(STUDENT_PRINT_HDR_STRING, "ID", "FIRST_NAME", "LAST_NAME", "GPA");
+            header_printed = true;
+        }
+
+        printf(STUDENT_PRINT_FMT_STRING, student.id, student.fname, student.lname, student.gpa / 100.0);
+    }
+
+
+    if (!header_printed) {
+        printf(M_DB_EMPTY);
+    }
+
+    return NO_ERROR;
 }
+
 
 /*
  *  print_student
@@ -226,10 +315,21 @@ int print_db(int fd)
  *                             s->id is zero
  *
  */
+
 void print_student(student_t *s)
 {
     // TODO
-    printf(M_NOT_IMPL);
+    if (!s || s->id == 0)
+    {
+        printf(M_ERR_STD_PRINT);
+        return;
+    }
+
+
+    printf(STUDENT_PRINT_HDR_STRING, "ID", "FIRST NAME", "LAST_NAME", "GPA");
+
+
+    printf(STUDENT_PRINT_FMT_STRING, s->id, s->fname, s->lname, s->gpa / 100.0);
 }
 
 /*
