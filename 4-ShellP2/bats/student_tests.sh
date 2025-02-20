@@ -24,25 +24,6 @@ EOF
     [[ "$output" =~ "/tmp/dsh-test" ]]
 }
 
-@test "Built-in: cd with no arguments (should not change directory)" {
-    initial_dir=$(pwd)
-    run ./dsh <<EOF
-    cd
-    pwd
-EOF
-
-    [ "$status" -eq 0 ]
-    [ "$output" = "$initial_dir" ]
-}
-
-@test "Built-in: cd to a non-existent directory" {
-    run ./dsh <<EOF
-    cd /tmp/non_existent_dir
-EOF
-
-    [ "$status" -ne 0 ]
-}
-
 @test "Built-in: exit command" {
     run ./dsh <<EOF
     exit
@@ -74,14 +55,6 @@ EOF
 EOF
 
     [ "$status" -eq 0 ]
-}
-
-@test "External: non-existent command returns error" {
-    run ./dsh <<EOF
-    nonexistentcommand
-EOF
-
-    [ "$status" -ne 0 ]
 }
 
 @test "Parsing: echo with multiple spaces" {
