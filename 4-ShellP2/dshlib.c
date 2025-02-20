@@ -93,7 +93,11 @@
  
      cmd->argv[argc] = NULL;
      cmd->argc = argc;
-     return (argc == 0) ? WARN_NO_CMDS : OK;
+     if (argc == 0) {
+        return WARN_NO_CMDS;
+    } else {
+        return OK;
+    }
  }
  
 
