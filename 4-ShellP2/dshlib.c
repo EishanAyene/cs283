@@ -159,8 +159,6 @@ int exec_local_cmd_loop()
 Built_In_Cmds match_command(const char *input) {
     if (strcmp(input, "exit") == 0) {
         return BI_CMD_EXIT;
-    } else if (strcmp(input, "dragon") == 0) {
-        return BI_CMD_DRAGON;
     } else if (strcmp(input, "cd") == 0) {
         return BI_CMD_CD;
     }
