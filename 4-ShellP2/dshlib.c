@@ -65,12 +65,12 @@
      bool in_quotes = false;
  
      while (*ptr) {
-         while (*ptr == ' ' && !in_quotes) ptr++;  // Skip spaces outside quotes
+         while (*ptr == ' ' && !in_quotes) ptr++;  
          if (*ptr == '\0') break;
  
          if (*ptr == '"') {
-             in_quotes = !in_quotes;  // Toggle quote flag
-             ptr++;  // Skip the opening quote
+             in_quotes = !in_quotes; 
+             ptr++;  
              cmd->argv[argc++] = ptr;
          } else {
              cmd->argv[argc++] = ptr;
@@ -78,13 +78,13 @@
  
          while (*ptr && (in_quotes || *ptr != ' ')) {
              if (*ptr == '"') {
-                 in_quotes = !in_quotes;  // Close quote
-                 *ptr = '\0';  // Terminate string
+                 in_quotes = !in_quotes;  
+                 *ptr = '\0';  
              }
              ptr++;
          }
  
-         if (*ptr == ' ') *ptr++ = '\0';  // Null terminate argument
+         if (*ptr == ' ') *ptr++ = '\0';  
  
          if (argc >= CMD_ARGV_MAX - 1) {
              return ERR_TOO_MANY_COMMANDS;
