@@ -56,9 +56,6 @@
  */
 
 
-
-
- /* Parses a single command (without pipes) into cmd_buff_t */
 int build_cmd_buff(char *cmd_line, cmd_buff_t *cmd) {
     memset(cmd, 0, sizeof(cmd_buff_t));
 
@@ -110,8 +107,6 @@ int build_cmd_buff(char *cmd_line, cmd_buff_t *cmd) {
     return argc == 0 ? WARN_NO_CMDS : OK;
 }
 
-
-/* Parses a command line with pipes into a command_list_t */
 int build_cmd_list(char *cmd_line, command_list_t *clist) {
     memset(clist, 0, sizeof(command_list_t));
 
@@ -127,10 +122,8 @@ int build_cmd_list(char *cmd_line, command_list_t *clist) {
             return ERR_TOO_MANY_COMMANDS;
         }
 
-
         int rc = build_cmd_buff(token, &clist->commands[clist->num]);
         if (rc != OK) return rc;
-
 
         clist->num++;
         token = strtok(NULL, PIPE_STRING);
@@ -140,8 +133,6 @@ int build_cmd_list(char *cmd_line, command_list_t *clist) {
     return OK;
 }
 
-
-/* Executes piped commands */
 int execute_pipeline(command_list_t *clist) {
     if (clist->num == 0) return WARN_NO_CMDS;
 
@@ -150,7 +141,6 @@ int execute_pipeline(command_list_t *clist) {
     pid_t pids[CMD_MAX];
 
 
-    // Create pipes
     for (int i = 0; i < clist->num - 1; i++) {
         if (pipe(pipes[i]) == -1) {
             perror("pipe failed");
@@ -159,7 +149,6 @@ int execute_pipeline(command_list_t *clist) {
     }
 
 
-    // Fork and execute each command
     for (int i = 0; i < clist->num; i++) {
         pids[i] = fork();
 
@@ -179,7 +168,6 @@ int execute_pipeline(command_list_t *clist) {
             }
 
 
-            // Close all pipes in the child process
             for (int j = 0; j < clist->num - 1; j++) {
                 close(pipes[j][0]);
                 close(pipes[j][1]);
@@ -193,14 +181,12 @@ int execute_pipeline(command_list_t *clist) {
     }
 
 
-    // Close all pipes in the parent
     for (int i = 0; i < clist->num - 1; i++) {
         close(pipes[i][0]);
         close(pipes[i][1]);
     }
 
 
-    // Wait for all child processes
     for (int i = 0; i < clist->num; i++) {
         waitpid(pids[i], NULL, 0);
     }
@@ -210,7 +196,6 @@ int execute_pipeline(command_list_t *clist) {
 }
 
 
-/* Main shell loop */
 int exec_local_cmd_loop() {
     char cmd_buff[SH_CMD_MAX];
     command_list_t cmd_list;
@@ -256,8 +241,6 @@ int exec_local_cmd_loop() {
                 continue;
             }
 
-
-            // Execute single command
             pid_t pid = fork();
             if (pid == 0) {
                 execvp(cmd_list.commands[0].argv[0], cmd_list.commands[0].argv);
@@ -277,8 +260,6 @@ int exec_local_cmd_loop() {
     return OK;
 }
 
-
-/* Identifies built-in commands */
 Built_In_Cmds match_command(const char *input) {
     if (strcmp(input, "exit") == 0) {
         return BI_CMD_EXIT;
